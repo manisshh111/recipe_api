@@ -47,41 +47,41 @@ pipeline {
             }
         }
 
-       stage('Build Docker Image') {
-           steps {
-               echo 'Building Docker image...'
-               sh '''
-                   sudo docker build -t $IMAGE_NAME:latest .
-               '''
-           }
-       }
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+                sh '''
+                    sudo docker build -t $IMAGE_NAME:latest .
+                '''
+            }
+        }
 
-       stage('Push to Docker Hub') {
-           steps {
-               echo 'Pushing image to Docker Hub...'
-               sh '''
-                   echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                   sudo docker push $IMAGE_NAME:latest
-               '''
-           }
-       }
+        stage('Push to Docker Hub') {
+            steps {
+                echo 'Pushing image to Docker Hub...'
+                sh '''
+                    echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    sudo docker push $IMAGE_NAME:latest
+                '''
+            }
+        }
 
-       stage('Deploy to Target EC2') {
-           steps {
-               echo 'Deploying to Target EC2...'
-               sshagent (credentials: ['target-ssh']) {
-                   sh '''
-                       ssh -o StrictHostKeyChecking=no $TARGET_HOST "
-                           sudo docker pull $IMAGE_NAME:latest &&
-                           sudo docker stop app || true &&
-                           sudo docker rm app || true &&
-                           sudo docker run -d -p 8084:8084 --name app $IMAGE_NAME:latest
-                       "
-                   '''
-               }
-           }
-       }
-
+        stage('Deploy to Target EC2') {
+            steps {
+                echo 'Deploying to Target EC2...'
+                sshagent (credentials: ['target-ssh']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no $TARGET_HOST "
+                            sudo docker pull $IMAGE_NAME:latest &&
+                            sudo docker stop app || true &&
+                            sudo docker rm app || true &&
+                            sudo docker run -d -p 8084:8084 --name app $IMAGE_NAME:latest
+                        "
+                    '''
+                }
+            }
+        }
+    }
 
     post {
         success {
